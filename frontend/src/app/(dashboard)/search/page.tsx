@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { Suspense, useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { AppShell } from '@/components/layout/AppShell'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -23,7 +23,7 @@ import { StreamingResponse } from '@/components/search/StreamingResponse'
 import { AdvancedModelsDialog } from '@/components/search/AdvancedModelsDialog'
 import { SaveToNotebooksDialog } from '@/components/search/SaveToNotebooksDialog'
 
-export default function SearchPage() {
+function SearchPageContent() {
   // Search state
   const [searchQuery, setSearchQuery] = useState('')
   const [searchType, setSearchType] = useState<'text' | 'vector'>('text')
@@ -44,9 +44,15 @@ export default function SearchPage() {
   // Save to notebooks dialog
   const [showSaveDialog, setShowSaveDialog] = useState(false)
 
-  // Get URL param
+  // Get URL params
   const searchParams = useSearchParams()
   const initialQuery = searchParams.get('q')
+  const initialMode = searchParams.get('mode') // 'ask' or 'search'
+
+  // Tab state - controlled to support URL-driven mode switching
+  const [activeTab, setActiveTab] = useState<string>(
+    initialMode === 'ask' ? 'ask' : (initialQuery ? 'search' : 'ask')
+  )
 
   // Hooks
   const searchMutation = useSearch()
@@ -62,21 +68,49 @@ export default function SearchPage() {
     return new Map(availableModels.map((model) => [model.id, model.name]))
   }, [availableModels])
 
+  // Handle URL-driven search/ask on mount or param change
   useEffect(() => {
     if (initialQuery) {
-      setSearchQuery(initialQuery)
-
-      searchMutation.mutate({
-        query: initialQuery,
-        type: searchType,
-        limit: 100,
-        search_sources: searchSources,
-        search_notes: searchNotes,
-        minimum_score: 0.2
-      })
+      if (initialMode === 'ask') {
+        // Set the question and trigger ask
+        setAskQuestion(initialQuery)
+        setActiveTab('ask')
+      } else {
+        // Default to search
+        setSearchQuery(initialQuery)
+        setActiveTab('search')
+        searchMutation.mutate({
+          query: initialQuery,
+          type: searchType,
+          limit: 100,
+          search_sources: searchSources,
+          search_notes: searchNotes,
+          minimum_score: 0.2
+        })
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [initialQuery])
+  }, [initialQuery, initialMode])
+
+  // Auto-trigger ask when question is set from URL and models are loaded
+  useEffect(() => {
+    if (
+      initialMode === 'ask' &&
+      initialQuery &&
+      askQuestion === initialQuery &&
+      modelDefaults?.default_chat_model &&
+      !ask.isStreaming &&
+      !ask.finalAnswer
+    ) {
+      const models = {
+        strategy: modelDefaults.default_chat_model,
+        answer: modelDefaults.default_chat_model,
+        finalAnswer: modelDefaults.default_chat_model
+      }
+      ask.sendAsk(initialQuery, models)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialMode, initialQuery, askQuestion, modelDefaults?.default_chat_model])
 
   const resolveModelName = (id?: string | null) => {
     if (!id) return 'Not set'
@@ -121,7 +155,7 @@ export default function SearchPage() {
       <div className="p-4 md:p-6">
         <h1 className="text-xl md:text-2xl font-bold mb-4 md:mb-6">Ask and Search</h1>
 
-        <Tabs defaultValue={initialQuery ? 'search' : 'ask'} className="w-full space-y-6">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full space-y-6">
           <div className="space-y-2">
             <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Choose a mode</p>
             <TabsList aria-label="Ask or search your knowledge base" className="w-full max-w-xl">
@@ -442,5 +476,20 @@ export default function SearchPage() {
         </Tabs>
       </div>
     </AppShell>
+  )
+}
+
+// Wrap in Suspense for useSearchParams() hydration safety
+export default function SearchPage() {
+  return (
+    <Suspense fallback={
+      <AppShell>
+        <div className="p-4 md:p-6 flex items-center justify-center">
+          <LoadingSpinner size="lg" />
+        </div>
+      </AppShell>
+    }>
+      <SearchPageContent />
+    </Suspense>
   )
 }
