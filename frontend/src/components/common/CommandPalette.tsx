@@ -69,10 +69,18 @@ export function CommandPalette({
     return () => document.removeEventListener('keydown', down)
   }, [])
 
+  // Reset query when dialog closes
+  useEffect(() => {
+    if (!open) {
+      setQuery('')
+    }
+  }, [open])
+
   const handleSelect = useCallback((callback: () => void) => {
     setOpen(false)
     setQuery('')
-    callback()
+    // Use setTimeout to ensure dialog closes before navigation
+    setTimeout(callback, 0)
   }, [])
 
   const handleNavigate = useCallback((href: string) => {
@@ -97,6 +105,18 @@ export function CommandPalette({
     })
   }, [handleSelect, onCreateSource, onCreateNotebook, onCreatePodcast])
 
+  // Check if query matches any command (navigation or create)
+  const queryLower = query.toLowerCase().trim()
+  const hasCommandMatch = queryLower && (
+    navigationItems.some(item =>
+      item.name.toLowerCase().includes(queryLower) ||
+      item.keywords.some(k => k.includes(queryLower))
+    ) ||
+    createItems.some(item =>
+      item.name.toLowerCase().includes(queryLower)
+    )
+  )
+
   return (
     <CommandDialog
       open={open}
@@ -112,9 +132,31 @@ export function CommandPalette({
       <CommandList>
         <CommandEmpty>
           <div className="text-sm text-muted-foreground">
-            No commands found. Try searching or asking below.
+            No commands found.
           </div>
         </CommandEmpty>
+
+        {/* Search/Ask - show FIRST when there's a query with no command match */}
+        {query.trim() && !hasCommandMatch && (
+          <CommandGroup heading="Search & Ask" forceMount>
+            <CommandItem
+              value={`__search__ ${query}`}
+              onSelect={handleSearch}
+              forceMount
+            >
+              <Search className="h-4 w-4" />
+              <span>Search for &ldquo;{query}&rdquo;</span>
+            </CommandItem>
+            <CommandItem
+              value={`__ask__ ${query}`}
+              onSelect={handleAsk}
+              forceMount
+            >
+              <MessageCircleQuestion className="h-4 w-4" />
+              <span>Ask about &ldquo;{query}&rdquo;</span>
+            </CommandItem>
+          </CommandGroup>
+        )}
 
         {/* Navigation */}
         <CommandGroup heading="Navigation">
@@ -144,21 +186,23 @@ export function CommandPalette({
           ))}
         </CommandGroup>
 
-        {/* Search/Ask - always show when there's a query */}
-        {query.trim() && (
+        {/* Search/Ask - also show at bottom when there IS a command match */}
+        {query.trim() && hasCommandMatch && (
           <>
             <CommandSeparator />
-            <CommandGroup heading="Search & Ask">
+            <CommandGroup heading="Or search your knowledge base" forceMount>
               <CommandItem
-                value={`search ${query}`}
+                value={`__search__ ${query}`}
                 onSelect={handleSearch}
+                forceMount
               >
                 <Search className="h-4 w-4" />
                 <span>Search for &ldquo;{query}&rdquo;</span>
               </CommandItem>
               <CommandItem
-                value={`ask ${query}`}
+                value={`__ask__ ${query}`}
                 onSelect={handleAsk}
+                forceMount
               >
                 <MessageCircleQuestion className="h-4 w-4" />
                 <span>Ask about &ldquo;{query}&rdquo;</span>
