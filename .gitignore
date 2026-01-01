@@ -131,6 +131,7 @@ docs/custom_gpt
 doc_exports/
 
 specs/
-.claude
+.claude/*
+!.claude/agents/
 
 .playwright-mcp/
