@@ -1,0 +1,6 @@
+creation_rules:
+  - path_regex: '((^|.*/)([^/]+)\.env$|^.*\.secrets/.*$)'
+    age:
+      # Sakanaka-Winn
+      - age1ly8etxruffve0yvkzae7mvwy2azez2vxfkxtr6wqauz3l8gkmqdqzf3wum
+    encrypted_regex: "^(password|token|secret|api_key|private_key|.*API_KEY)$"

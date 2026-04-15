@@ -1,0 +1,46 @@
+# $ find ./Assets -name '*.cs' | xargs file | grep CRLF | awk -F: '{print $1}' | xargs dos2unix
+
+# リポジトリ全体を再正規化
+# git add --renormalize .
+
+# デフォルトですべてのテキストファイルをLFとして正規化
+* text eol=lf
+# シェルスクリプトは明示的にLFを指定 (デフォルト設定と重複するが明示のため)
+*.sh text eol=lf
+
+# Windows固有のスクリプトのみCRLFに設定
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
+*.vbs text eol=crlf
+*.reg text eol=crlf
+
+# Visual Studio プロジェクト類（差分ノイズを嫌うなら固定）
+*.sln    text eol=crlf
+*.csproj text eol=crlf
+*.vbproj text eol=crlf
+*.vcxproj text eol=crlf
+
+# バイナリファイルは変換を無効化
+# ドキュメント
+*.xls binary
+*.xlsx binary
+*.ppt binary
+*.pptx binary
+
+# 画像
+*.ico binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.bmp binary
+*.svg binary
+
+# その他 (コンパイル済みファイルなど)
+*.dll binary
+*.so binary
+*.o binary
+*.class binary
+*.pyc binary
+*.DS_Store binary

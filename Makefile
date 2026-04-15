@@ -1,3 +1,11 @@
+-include .make/age.mk
+-include .make/git.mk
+-include .make/repomix.mk
+-include .make/sops.mk
+-include .make/system.mk
+-include docker/docker.mk
+-include docker/ghcr.mk
+
 .PHONY: run frontend check ruff database lint api start-all stop-all status clean-cache worker worker-start worker-stop worker-restart
 .PHONY: docker-buildx-prepare docker-buildx-clean docker-buildx-reset
 .PHONY: docker-push docker-push-latest docker-release docker-build-local tag export-docs
@@ -6,8 +14,8 @@
 VERSION := $(shell grep -m1 version pyproject.toml | cut -d'"' -f2)
 
 # Image names for both registries
-DOCKERHUB_IMAGE := lfnovo/open_notebook
-GHCR_IMAGE := ghcr.io/lfnovo/open-notebook
+DOCKERHUB_IMAGE := open-notebook
+GHCR_IMAGE := ghcr.io/4sas/open-notebook
 
 # Build platforms
 PLATFORMS := linux/amd64,linux/arm64
