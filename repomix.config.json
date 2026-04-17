@@ -1,0 +1,68 @@
+{
+  "$schema": "https://repomix.com/schemas/latest/schema.json",
+  "input": {
+    "maxFileSize": 52428800
+  },
+  "output": {
+    "filePath": "repomix-output.xml",
+    "style": "xml",
+    "parsableStyle": false,
+    "fileSummary": true,
+    "directoryStructure": true,
+    "files": true,
+    "removeComments": false,
+    "removeEmptyLines": true,
+    "compress": true,
+    "topFilesLength": 5,
+    "showLineNumbers": false,
+    "truncateBase64": true,
+    "copyToClipboard": false,
+    "includeFullDirectoryStructure": false,
+    "tokenCountTree": false,
+    "git": {
+      "sortByChanges": true,
+      "sortByChangesMaxCommits": 100,
+      "includeDiffs": false,
+      "includeLogs": false,
+      "includeLogsCount": 50
+    }
+  },
+  "include": [],
+  "ignore": {
+    "useGitignore": true,
+    "useDotIgnore": true,
+    "useDefaultPatterns": true,
+    "customPatterns": [
+      "**/.aiderignore",
+      "**/.codex/",
+      "**/.gemini/",
+      "**/.git/",
+      "**/.gitattributes",
+      "**/.github/",
+      "**/.githooks/",
+      "**/.gitignore",
+      "**/.kiro/",
+      "**/.opencode/",
+      "**/.pnpm-store/",
+      "**/.pytest_cache/",
+      "**/.ruff_cache/",
+      "**/.serena/",
+      "**/.svelte-kit/",
+      "**/Makefile",
+      "**/aider.env",
+      "**/firebase-service-account-key.json",
+      "**/obj/",
+      "**/repomix.config.json",
+      "**/requirements.txt",
+      "**/scripts/runbooks/*.sh",
+      "**/temp/",
+      "**/terraform.tfstate.d/"
+    ]
+  },
+  "security": {
+    "enableSecurityCheck": true
+  },
+  "tokenCount": {
+    "encoding": "o200k_base"
+  }
+}

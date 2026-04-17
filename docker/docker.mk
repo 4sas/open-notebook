@@ -23,7 +23,6 @@ __DOCKER_DOCKER_MK__ := 1
 DOCKER_DIR := docker
 BUILD_TAG ?= latest
 DOCKER_BUILD_IMAGE_NAME ?= open-notebook
-IMAGE_LOCAL_NAME ?= $(DOCKER_BUILD_IMAGE_NAME)
 DOCKER_BUILD_DOCKERFILE ?= Dockerfile.single
 DOCKER_BUILD_CONTEXT ?= .
 
@@ -210,7 +209,7 @@ dc-build:
 	  echo "BUILD_ENV must be one of: local | staging | production (shorthand: l | stg | prd)" >&2; \
 	  exit 2; \
 	fi
-	docker build -t $(IMAGE_LOCAL_NAME):$(BUILD_TAG) -f $(DOCKER_BUILD_DOCKERFILE) --build-arg ENV=$(BUILD_ENV_RESOLVED) $(DOCKER_BUILD_CONTEXT)
+	docker build -t $(DOCKER_BUILD_IMAGE_NAME):$(BUILD_TAG) -f $(DOCKER_BUILD_DOCKERFILE) --build-arg ENV=$(BUILD_ENV_RESOLVED) $(DOCKER_BUILD_CONTEXT)
 
 # ドット記法で tag / env を渡す省略形。
 # 例) make dc-build.staging

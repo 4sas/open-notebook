@@ -24,7 +24,6 @@ GHCR_ENV_RESOLVED := $(call normalize_env,$(or $(GHCR_ENV),$(ENV),$(env)))
 GHCR_OWNER ?= 4sas
 GHCR_USERNAME ?= 4sas
 GHCR_TOKEN_FILE ?= .secrets/ghcr.token
-GHCR_IMAGE_BASE_NAME ?= $(IMAGE_LOCAL_NAME)
 
 .PHONY: ghcr-push
 ifneq ($(IS_WINDOWS),)
@@ -33,7 +32,6 @@ ghcr-push:
 	@powershell.exe -NoProfile -ExecutionPolicy Bypass -Command " \
 	  $$ErrorActionPreference = 'Stop'; \
 	  $$envName = '$(GHCR_ENV_RESOLVED)'; \
-	  if ('local', 'staging', 'production' -notcontains $$envName) { throw 'GHCR_ENV must be one of: local | staging | production (shorthand: l | 	stg | prd)' }; \
 	  $$owner = '$(GHCR_OWNER)'.Trim(); \
 	  $$username = '$(GHCR_USERNAME)'.Trim(); \
 	  $$tokenFile = '$(GHCR_TOKEN_FILE)'.Trim(); \
@@ -43,28 +41,22 @@ ghcr-push:
 	  if (-not (Test-Path $$tokenFile)) { throw ('GHCR_TOKEN_FILE not found: ' + $$tokenFile) }; \
 	  $$token = (Get-Content -Raw $$tokenFile).Trim(); \
 	  if ([string]::IsNullOrWhiteSpace($$token)) { throw 'GHCR token is empty' }; \
-	  $$suffix = if ($$envName -eq 'local') { '-local' } elseif ($$envName -eq 'staging') { '-staging' } else { '' }; \
 	  $$registry = '$(GHCR_REGISTRY)'; \
 	  $$owner = $$owner.ToLowerInvariant(); \
-	  $$imageName = ('$(GHCR_IMAGE_BASE_NAME)' + $$suffix).ToLowerInvariant(); \
+	  $$imageName = ('$(DOCKER_BUILD_IMAGE_NAME)').ToLowerInvariant(); \
 	  $$tag = '$(BUILD_TAG)'; \
 	  $$imageUri = $$registry + '/' + $$owner + '/' + $$imageName + ':' + $$tag; \
 	  $$token | docker login $$registry --username $$username --password-stdin; \
-	  docker tag '$(IMAGE_LOCAL_NAME):$(BUILD_TAG)' $$imageUri; \
+	  docker tag '$(DOCKER_BUILD_IMAGE_NAME):$(BUILD_TAG)' $$imageUri; \
 	  docker push $$imageUri; \
 	  Write-Host ('Pushed: ' + $$imageUri);"
 else
 # Unix 系では POSIX shell 経由で push する。
 ghcr-push:
 	@set -eu; \
-	  case "$(GHCR_ENV_RESOLVED)" in \
-	  local) suffix="-local" ;; \
-	  staging) suffix="-staging" ;; \
-	  production) suffix="" ;; \
-	  *) echo "GHCR_ENV must be one of: local | staging | production (shorthand: l | stg | prd)" >&2; exit 2 ;; \
-	  esac; \
 	  owner='$(GHCR_OWNER)'; \
 	  username='$(GHCR_USERNAME)'; \
+	  env_name='$(GHCR_ENV_RESOLVED)'; \
 	  token_file='$(GHCR_TOKEN_FILE)'; \
 	  [ -n "$$owner" ] || { echo 'GHCR_OWNER is required' >&2; exit 2; }; \
 	  [ -n "$$username" ] || { echo 'GHCR_USERNAME is required' >&2; exit 2; }; \
@@ -74,11 +66,11 @@ ghcr-push:
 	  [ -n "$$token" ] || { echo 'GHCR token is empty' >&2; exit 2; }; \
 	  registry='$(GHCR_REGISTRY)'; \
 	  owner_lc="$$(printf '%s' "$$owner" | tr '[:upper:]' '[:lower:]')"; \
-	  image_name="$$(printf '%s' '$(GHCR_IMAGE_BASE_NAME)')$${suffix}"; \
+	  image_name='$(DOCKER_BUILD_IMAGE_NAME)'; \
 	  image_name_lc="$$(printf '%s' "$$image_name" | tr '[:upper:]' '[:lower:]')"; \
 	  image_uri="$$registry/$$owner_lc/$$image_name_lc:$(BUILD_TAG)"; \
 	  printf '%s' "$$token" | docker login "$$registry" --username "$$username" --password-stdin; \
-	  docker tag "$(IMAGE_LOCAL_NAME):$(BUILD_TAG)" "$$image_uri"; \
+	  docker tag "$(DOCKER_BUILD_IMAGE_NAME):$(BUILD_TAG)" "$$image_uri"; \
 	  docker push "$$image_uri"; \
 	  echo "Pushed: $$image_uri"
 endif
